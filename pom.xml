@@ -6,7 +6,7 @@
   <artifactId>rest-client-quickstart</artifactId>
   <version>1.0-SNAPSHOT</version>
   <properties>
-    <CERTCONTAINER>/tmp/qiot/truststore/client.ts</CERTCONTAINER>
+    <CERTCONTAINER>/work/application/truststore/client.ts</CERTCONTAINER>
     <CERTLOCAL>${basedir}/src/resources/truststore/client.ts</CERTLOCAL>
     <CERTPASS>123456</CERTPASS>
     <ENABLESSL>true</ENABLESSL>

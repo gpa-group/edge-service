@@ -1,5 +1,7 @@
 package com.gpa.edge.client;
 
+import java.util.HashMap;
+
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -66,7 +68,6 @@ public class SensorResource {
     }
 
     void onStop(@Observes ShutdownEvent ev) {               
-        System.out.println("The application is stopping...");
 
         try{
             dataHub.unregister(id);
@@ -140,18 +141,18 @@ public class SensorResource {
     private String getSerial(){
         //get SerialId method
         try{
-            serialId = sensorService.getSerial();
+            return sensorService.getSerial();
         }catch(Exception e){
-            serialId = "20000000d7c11dc1";
             System.out.println("Error getting serialId: " + e.getMessage());
+            return "ERROROOOOOOOOOOO";
         }
     }
 
     private HashMap<String,Double> getCoordinates(){
         //get coordinates methof
-        HashMap<String,Double> coordinates = new HashMap<Integer,Double>();
-        coordinates.put(latitude, 45.395402);
-        coordinates.put(longitude, 11.945819);
+        HashMap<String,Double> coordinates = new HashMap<String,Double>();
+        coordinates.put("latitude", 45.395402);
+        coordinates.put("longitude", 11.945819);
         return coordinates;
     }
 }
