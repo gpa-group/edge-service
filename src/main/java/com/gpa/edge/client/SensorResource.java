@@ -1,5 +1,7 @@
 package com.gpa.edge.client;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 
 import javax.inject.Inject;
@@ -10,6 +12,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
@@ -17,7 +20,7 @@ import io.smallrye.mutiny.Uni;
 
 import com.gpa.edge.client.SensorService;
 import com.gpa.edge.datahub.DataHubClientService;
-
+import com.gpa.edge.datahub.DataHubServiceImpl;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
@@ -32,10 +35,16 @@ import javax.transaction.Transactional;
 
 import io.quarkus.scheduler.Scheduled;
 
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 @Path("/")
 @ApplicationScoped
 public class SensorResource {
-
+    @Inject
+    DataHubServiceImpl dataHubServiceImpl;
     int id;
     String deviceName = ConfigProvider.getConfig().getValue("device.name", String.class);
 
@@ -55,34 +64,49 @@ public class SensorResource {
 
         String stringId = "";
         try{
-            stringId = dataHub.register(serialId, "edGpa2", latitude, longitude);
+            stringId = dataHub.register(serialId, deviceName,longitude, latitude);
+            id = Integer.valueOf(stringId);
+            System.out.println("Registred. Id: " + id);
         } catch(Exception e){
             System.out.println("Registration failed: " + e.getMessage());
         }
-        if(stringId != null){
-            id = Integer.valueOf(stringId);
-            System.out.println("stringId: " + id);
-        }else{
-            System.out.println("stringId nullo");
-        }
+        
     }
 
     void onStop(@Observes ShutdownEvent ev) {               
 
         try{
             dataHub.unregister(id);
+            System.out.println("Device Id unregistred: " + id);
         } catch(Exception e){
-            System.out.println("errore: " + e.getMessage());
+            System.out.println("Error unregistering: " + e.getMessage());
         }
     }
 
     @Scheduled(every = "10s") 
     void schedule() {
-        i++;
-        System.out.println("nuovo valore: " + i);
+        String measure = null;
+        String completedGasMeasure = null;
+        String completedPollutionMeasure = null;
+
+        try{
+            measure = sensorService.getGas();
+            completedGasMeasure = getCompletedMeasure(measure);
+            System.out.println("misura letta: " + completedGasMeasure);
+            dataHubServiceImpl.sendGas(completedGasMeasure);
+        }catch(Exception e){
+            System.out.println("Error getting gas measure");
+        }
+
+        try{
+            measure = sensorService.getPollution();
+            completedPollutionMeasure = getCompletedMeasure(measure);
+            System.out.println("misura letta: " + completedPollutionMeasure);
+            dataHubServiceImpl.sendPollution(completedPollutionMeasure);
+        }catch(Exception e){
+            System.out.println("Error getting pollution measure");
+        }
     }
-
-
 
     @Inject
     @RestClient
@@ -111,7 +135,7 @@ public class SensorResource {
     @Produces(MediaType.TEXT_PLAIN)
     public String serial() throws Exception{
         try{
-            return sensorService.getSerial() + dataHub.a;
+            return sensorService.getSerial();
         }catch(Exception e){
             return "eccezione: " + e.getMessage();
         }
@@ -155,4 +179,12 @@ public class SensorResource {
         coordinates.put("longitude", 11.945819);
         return coordinates;
     }
+
+    private String getCompletedMeasure(String measure) {
+        JsonObject jsonObject = new JsonParser().parse(measure).getAsJsonObject();
+        jsonObject.addProperty("stationId", id);
+        jsonObject.addProperty("instant", OffsetDateTime.now(ZoneOffset.UTC).toInstant().toString());
+        return jsonObject.toString();
+    }
+
 }

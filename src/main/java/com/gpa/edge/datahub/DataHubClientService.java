@@ -23,7 +23,7 @@ import org.jboss.resteasy.annotations.jaxrs.PathParam;
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.TEXT_PLAIN)
 public interface DataHubClientService {
-	String a = "ciao";
+
 	@PUT
 	@Path("/serial/{serial}/name/{name}/longitude/{longitude}/latitude/{latitude}")
 	String register(
@@ -36,4 +36,6 @@ public interface DataHubClientService {
 	@Path("/id/{id}")
 	public void unregister(
 		@PathParam("id") int id) throws Exception;
+
+	
 }
