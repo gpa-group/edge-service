@@ -3,6 +3,9 @@ package com.gpa.edge.client;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
+import java.lang.StringBuffer;
+import java.net.URL;
+import java.io.InputStream;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -20,7 +23,10 @@ import io.smallrye.mutiny.Uni;
 
 import com.gpa.edge.client.SensorService;
 import com.gpa.edge.datahub.DataHubClientService;
+import com.gpa.edge.client.CoordinatesService;
 import com.gpa.edge.datahub.DataHubServiceImpl;
+import com.gpa.edge.client.CoordinatesBean;
+
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 
@@ -50,21 +56,26 @@ public class SensorResource {
 
     int i = 0;
     
-    void onStart(@Observes StartupEvent ev) {    
+    void onStart(@Observes StartupEvent ev) 
+        throws Exception {    
 
         System.out.println("device name: " + deviceName);           
         String serialId = getSerial();
 
-
-        HashMap<String,Double> coordinates = getCoordinates();
-
+        HashMap<String,Double>  coordinates = getCoordinates();
+        
         double latitude = coordinates.get("latitude");
         double longitude = coordinates.get("longitude");
+
+        // CoordinatesBean coordinates = getCoordinates("padova");
+
+        // double latitude = coordinates.latitude;
+        // double longitude = coordinates.longitude;
 
 
         String stringId = "";
         try{
-            stringId = dataHub.register(serialId, deviceName,longitude, latitude);
+            stringId = dataHub.register(serialId, deviceName, longitude, latitude);
             id = Integer.valueOf(stringId);
             System.out.println("Registred. Id: " + id);
         } catch(Exception e){
@@ -92,8 +103,7 @@ public class SensorResource {
         try{
             measure = sensorService.getGas();
             completedGasMeasure = getCompletedMeasure(measure);
-            System.out.println("misura letta: " + completedGasMeasure);
-            dataHubServiceImpl.sendGas(completedGasMeasure);
+        //    dataHubServiceImpl.sendGas(completedGasMeasure);
         }catch(Exception e){
             System.out.println("Error getting gas measure");
         }
@@ -101,8 +111,7 @@ public class SensorResource {
         try{
             measure = sensorService.getPollution();
             completedPollutionMeasure = getCompletedMeasure(measure);
-            System.out.println("misura letta: " + completedPollutionMeasure);
-            dataHubServiceImpl.sendPollution(completedPollutionMeasure);
+        //    dataHubServiceImpl.sendPollution(completedPollutionMeasure);
         }catch(Exception e){
             System.out.println("Error getting pollution measure");
         }
@@ -115,6 +124,10 @@ public class SensorResource {
     @Inject
     @RestClient
     DataHubClientService dataHub;
+
+    @Inject
+    @RestClient
+    CoordinatesService coordinatesService;
 
     @GET
     @Path("/gas")
@@ -181,10 +194,45 @@ public class SensorResource {
     }
 
     private String getCompletedMeasure(String measure) {
-        JsonObject jsonObject = new JsonParser().parse(measure).getAsJsonObject();
+        JsonObject jsonObject = new JsonParser()
+            .parse(measure).getAsJsonObject();
         jsonObject.addProperty("stationId", id);
         jsonObject.addProperty("instant", OffsetDateTime.now(ZoneOffset.UTC).toInstant().toString());
         return jsonObject.toString();
     }
 
+    /* public CoordinatesBean getCoordinates(String address)
+            throws Exception {
+        CoordinatesBean coordinates = null;
+        /* StringBuffer query = null;
+        String[] split = null;
+        split = address.split(" ");
+        query = new StringBuffer();
+        query.append("https://nominatim.openstreetmap.org/search?q=");
+        if (split.length == 0) {
+            return null;
+        }
+        for (int i = 0; i < split.length; i++) {
+            query.append(split[i]);
+            if (i < (split.length - 1)) {
+                query.append("+");
+            }
+        }
+        query.append("&format=json&addressdetails=1");
+        System.out.println("Query:" + query); */
+        // URL url = new URL(query.toString());
+     /*   String coords = coordinatesService.getCoordinates(address, "json", "1");
+        System.out.println(coords);
+        JsonObject jsonObject = new JsonParser()
+            .parse(coords).getAsJsonArray().get(0).getAsJsonObject();
+        System.out.println(jsonObject.toString());
+        coordinates = new CoordinatesBean();
+        coordinates.longitude = Double
+            .parseDouble(jsonObject.get("lon").toString());
+        coordinates.latitude = Double
+            .parseDouble(jsonObject.get("lat").toString());
+
+        return coordinates;
+    }
+ */
 }
