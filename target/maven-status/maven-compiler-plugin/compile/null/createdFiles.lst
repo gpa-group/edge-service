@@ -1,0 +1,8 @@
+com/gpa/edge/client/Pollution.class
+com/gpa/edge/datahub/DataHubServiceImpl.class
+com/gpa/edge/datahub/DataHubClientService.class
+com/gpa/edge/client/SensorResource.class
+com/gpa/edge/client/CoordinatesService.class
+com/gpa/edge/client/CoordinatesBean.class
+com/gpa/edge/client/SensorService.class
+com/gpa/edge/client/Gas.class
