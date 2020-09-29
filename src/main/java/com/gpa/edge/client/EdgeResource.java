@@ -17,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import org.jboss.resteasy.annotations.jaxrs.PathParam;
@@ -26,7 +27,7 @@ import io.smallrye.mutiny.Uni;
 import com.gpa.edge.client.SensorService;
 import com.gpa.edge.datahub.DataHubClientService;
 import com.gpa.edge.client.CoordinatesService;
-import com.gpa.edge.datahub.DataHubServiceImpl;
+import com.gpa.edge.datahub.DataHubMqttImpl;
 import com.gpa.edge.client.CoordinatesBean;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -53,7 +54,7 @@ import com.google.gson.JsonParser;
 public class EdgeResource {
 
     @Inject
-    DataHubServiceImpl dataHubServiceImpl;
+    DataHubMqttImpl dataHubMqttImpl;
 
     @Inject
     @RestClient
@@ -71,7 +72,8 @@ public class EdgeResource {
     void onStart(@Observes StartupEvent ev) 
         throws Exception {    
         
-        System.out.println("here to serve!");   
+
+        System.out.println("here to serve!"); 
 
         System.out.println("device name: " + deviceName);           
         String serialId = getSerial();
@@ -112,7 +114,7 @@ public class EdgeResource {
         try{
             measure = sensorService.getGas();
             decoratedGasMeasure = decorateMeasure(measure);
-            dataHubServiceImpl.sendGas(decoratedGasMeasure);
+            dataHubMqttImpl.sendGas(decoratedGasMeasure);
         }catch(Exception e){
             System.out.println("Error getting gas measure" + e.getMessage());
         }
@@ -120,7 +122,7 @@ public class EdgeResource {
         try{
             measure = sensorService.getPollution();
             decoratedPollutionMeasure = decorateMeasure(measure);
-            dataHubServiceImpl.sendPollution(decoratedPollutionMeasure);
+            dataHubMqttImpl.sendPollution(decoratedPollutionMeasure);
         }catch(Exception e){
             System.out.println("Error getting pollution measure" + e.getMessage());
         }
@@ -144,11 +146,7 @@ public class EdgeResource {
     @Path("/getSerial")
     @Produces(MediaType.TEXT_PLAIN)
     public String serial() throws Exception{
-        try{
-            return sensorService.getSerial();
-        }catch(Exception e){
-            return "Error gettin serial: " + e.getMessage();
-        }
+        return sensorService.getSerial();
     }
 
     @GET

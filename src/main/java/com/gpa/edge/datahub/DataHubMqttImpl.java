@@ -13,7 +13,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
 @ApplicationScoped
-public class DataHubServiceImpl {
+public class DataHubMqttImpl {
 
 	@Inject
 	@Channel("gas")

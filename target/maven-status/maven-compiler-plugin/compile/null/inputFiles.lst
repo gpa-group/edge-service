@@ -2,5 +2,5 @@
 /home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/datahub/DataHubClientService.java
 /home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/client/CoordinatesService.java
 /home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/client/EdgeResource.java
-/home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/datahub/DataHubMqttImpl.java
+/home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/datahub/DataHubServiceImpl.java
 /home/silviu/qiot/edge-service/src/main/java/com/gpa/edge/client/CoordinatesBean.java
