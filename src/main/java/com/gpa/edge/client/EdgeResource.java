@@ -7,6 +7,8 @@ import java.lang.StringBuffer;
 import java.net.URL;
 import java.io.InputStream;
 
+import org.apache.commons.io.IOUtils;
+
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -48,9 +50,19 @@ import com.google.gson.JsonParser;
 
 @Path("/")
 @ApplicationScoped
-public class SensorResource {
+public class EdgeResource {
+
     @Inject
     DataHubServiceImpl dataHubServiceImpl;
+
+    @Inject
+    @RestClient
+    SensorService sensorService;
+
+    @Inject
+    @RestClient
+    DataHubClientService dataHub;
+
     int id;
     String deviceName = ConfigProvider.getConfig().getValue("device.name", String.class);
 
@@ -58,30 +70,25 @@ public class SensorResource {
     
     void onStart(@Observes StartupEvent ev) 
         throws Exception {    
+        
+        System.out.println("here to serve!");   
 
         System.out.println("device name: " + deviceName);           
         String serialId = getSerial();
 
-       /*  HashMap<String,Double>  coordinates = getCoordinates();
-        
-        double latitude = coordinates.get("latitude");
-        double longitude = coordinates.get("longitude"); */
-
-        CoordinatesBean coordinates = getCoordinates();
-
-        // CoordinatesBean coordinates2 = getCoordinates2("padova");
+        CoordinatesBean coordinates = getCoordinates("via lisbona padova");
 
         double latitude = coordinates.latitude;
         double longitude = coordinates.longitude;
 
-
-        String stringId = "";
+        String stringId = null;
         try{
             stringId = dataHub.register(serialId, deviceName, longitude, latitude);
             id = Integer.valueOf(stringId);
             System.out.println("Registred. Id: " + id);
         } catch(Exception e){
             System.out.println("Registration failed: " + e.getMessage());
+            stringId = "ERRORID";
         }
         
     }
@@ -96,40 +103,28 @@ public class SensorResource {
         }
     }
 
-    @Scheduled(every = "10s") 
-    void schedule() {
+    @Scheduled(every = "5s") 
+    void scheduled() {
         String measure = null;
-        String completedGasMeasure = null;
-        String completedPollutionMeasure = null;
+        String decoratedGasMeasure = null;
+        String decoratedPollutionMeasure = null;
 
         try{
             measure = sensorService.getGas();
-            completedGasMeasure = getCompletedMeasure(measure);
-        //    dataHubServiceImpl.sendGas(completedGasMeasure);
+            decoratedGasMeasure = decorateMeasure(measure);
+        //    dataHubServiceImpl.sendGas(decoratedGasMeasure);
         }catch(Exception e){
             System.out.println("Error getting gas measure");
         }
 
         try{
             measure = sensorService.getPollution();
-            completedPollutionMeasure = getCompletedMeasure(measure);
-        //    dataHubServiceImpl.sendPollution(completedPollutionMeasure);
+            decoratedPollutionMeasure = decorateMeasure(measure);
+        //    dataHubServiceImpl.sendPollution(decoratedPollutionMeasure);
         }catch(Exception e){
             System.out.println("Error getting pollution measure");
         }
     }
-
-    @Inject
-    @RestClient
-    SensorService sensorService;
-
-    @Inject
-    @RestClient
-    DataHubClientService dataHub;
-
-    @Inject
-    @RestClient
-    CoordinatesService coordinatesService;
 
     @GET
     @Path("/gas")
@@ -152,7 +147,7 @@ public class SensorResource {
         try{
             return sensorService.getSerial();
         }catch(Exception e){
-            return "eccezione: " + e.getMessage();
+            return "Error gettin serial: " + e.getMessage();
         }
     }
 
@@ -160,14 +155,14 @@ public class SensorResource {
     @Path("/delete")
     @Produces(MediaType.TEXT_PLAIN)
     public String unregister() throws Exception{
-
-        System.out.println("Id: " + id);
+        //delete resource
         try{
             dataHub.unregister(id);
         } catch(Exception e){
-            System.out.println("errore: " + e.getMessage());
+            System.out.println("Error unregistrering: " + e.getMessage());
+            return "Error unregistrering: " + e.getMessage();
         }
-        return "fatto?" + id;
+        return "Unregistred id: " + id;
     }
 
 
@@ -180,34 +175,37 @@ public class SensorResource {
     private String getSerial(){
         //get SerialId method
         try{
-            return sensorService.getSerial();
+
+            String jsonStringSerial = sensorService.getSerial();
+            JsonObject jsonObject = new JsonParser()
+                .parse(jsonStringSerial).getAsJsonObject();
+
+            return jsonObject.get("serial_number").getAsString();
+
         }catch(Exception e){
             System.out.println("Error getting serialId: " + e.getMessage());
             return "ERROROOOOOOOOOOO";
         }
     }
 
-    private CoordinatesBean getCoordinates(){
-        //get coordinates methof
-        CoordinatesBean coordinates = new CoordinatesBean();
-        coordinates.latitude = 45.395402;
-        coordinates.longitude = 11.945819;
-        return coordinates;
-    }
+    private String decorateMeasure(String measure) {
 
-    private String getCompletedMeasure(String measure) {
         JsonObject jsonObject = new JsonParser()
             .parse(measure).getAsJsonObject();
         jsonObject.addProperty("stationId", id);
         jsonObject.addProperty("instant", OffsetDateTime.now(ZoneOffset.UTC).toInstant().toString());
-        return jsonObject.toString();
+
+        return jsonObject.getAsString();
+
     }
 
-    @Path("/search")
-    public CoordinatesBean getCoordinates2(String address)
+    public CoordinatesBean getCoordinates(String address)
             throws Exception {
+
+        //get coordinates method
+
         CoordinatesBean coordinates = null;
-        /* StringBuffer query = null;
+        StringBuffer query = null;
         String[] split = null;
         split = address.split(" ");
         query = new StringBuffer();
@@ -222,19 +220,18 @@ public class SensorResource {
             }
         }
         query.append("&format=json&addressdetails=1");
-        System.out.println("Query:" + query); */
-        // URL url = new URL(query.toString());
-        String coords = coordinatesService.getCoordinates(address, "json", "1");
-        System.out.println(coords);
+        URL url = new URL(query.toString());
+        InputStream is = url.openStream();
+        String result = IOUtils.toString(is);
+    //    String result = coordinatesService.getCoordinates(address, "json", "1");  //not used as recieving 302
         JsonObject jsonObject = new JsonParser()
-            .parse(coords).getAsJsonArray().get(0).getAsJsonObject();
-        System.out.println(jsonObject.toString());
+            .parse(result).getAsJsonArray().get(0).getAsJsonObject();
         coordinates = new CoordinatesBean();
         coordinates.longitude = Double
-            .parseDouble(jsonObject.get("lon").toString());
+            .parseDouble(jsonObject.get("lon").getAsString());
         coordinates.latitude = Double
-            .parseDouble(jsonObject.get("lat").toString());
-
+            .parseDouble(jsonObject.get("lat").getAsString());
+        
         return coordinates;
     }
  

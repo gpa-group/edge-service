@@ -20,8 +20,11 @@ import io.smallrye.mutiny.Uni;
 @ApplicationScoped
 @Produces(MediaType.TEXT_PLAIN)
 @Consumes(MediaType.TEXT_PLAIN)
-public interface CoordinatesService {
-
+public interface CoordinatesService { 
+    /*
+    *   recieving 302
+    */ 
+    
     @GET
     @Path("/q/{q}/format/{format}/addressdetails/{addressdetails}")
     @Produces("application/text")

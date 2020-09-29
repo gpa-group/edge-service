@@ -1,6 +1,6 @@
 package com.gpa.edge.client;
 
-class CoordinatesBean {
+public class CoordinatesBean{
     Double longitude;
     Double latitude;
 }
