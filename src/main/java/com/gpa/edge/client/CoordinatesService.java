@@ -28,6 +28,5 @@ public interface CoordinatesService {
     String getCoordinates(
         @PathParam String q,
         @PathParam String format,
-        @PathParam String addressdetails);
-
+        @PathParam String addressdetails) throws Exception;
 }

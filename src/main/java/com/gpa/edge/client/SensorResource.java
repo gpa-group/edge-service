@@ -62,15 +62,17 @@ public class SensorResource {
         System.out.println("device name: " + deviceName);           
         String serialId = getSerial();
 
-        HashMap<String,Double>  coordinates = getCoordinates();
+       /*  HashMap<String,Double>  coordinates = getCoordinates();
         
         double latitude = coordinates.get("latitude");
-        double longitude = coordinates.get("longitude");
+        double longitude = coordinates.get("longitude"); */
 
-        // CoordinatesBean coordinates = getCoordinates("padova");
+        CoordinatesBean coordinates = getCoordinates();
 
-        // double latitude = coordinates.latitude;
-        // double longitude = coordinates.longitude;
+        // CoordinatesBean coordinates2 = getCoordinates2("padova");
+
+        double latitude = coordinates.latitude;
+        double longitude = coordinates.longitude;
 
 
         String stringId = "";
@@ -185,11 +187,11 @@ public class SensorResource {
         }
     }
 
-    private HashMap<String,Double> getCoordinates(){
+    private CoordinatesBean getCoordinates(){
         //get coordinates methof
-        HashMap<String,Double> coordinates = new HashMap<String,Double>();
-        coordinates.put("latitude", 45.395402);
-        coordinates.put("longitude", 11.945819);
+        CoordinatesBean coordinates = new CoordinatesBean();
+        coordinates.latitude = 45.395402;
+        coordinates.longitude = 11.945819;
         return coordinates;
     }
 
@@ -201,7 +203,8 @@ public class SensorResource {
         return jsonObject.toString();
     }
 
-    /* public CoordinatesBean getCoordinates(String address)
+    @Path("/search")
+    public CoordinatesBean getCoordinates2(String address)
             throws Exception {
         CoordinatesBean coordinates = null;
         /* StringBuffer query = null;
@@ -221,7 +224,7 @@ public class SensorResource {
         query.append("&format=json&addressdetails=1");
         System.out.println("Query:" + query); */
         // URL url = new URL(query.toString());
-     /*   String coords = coordinatesService.getCoordinates(address, "json", "1");
+        String coords = coordinatesService.getCoordinates(address, "json", "1");
         System.out.println(coords);
         JsonObject jsonObject = new JsonParser()
             .parse(coords).getAsJsonArray().get(0).getAsJsonObject();
@@ -234,5 +237,5 @@ public class SensorResource {
 
         return coordinates;
     }
- */
+ 
 }
