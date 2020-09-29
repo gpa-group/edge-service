@@ -17,12 +17,12 @@ public interface SensorService {
     @GET
     @Path("/gas")
     @Produces("application/text")
-    String getGas();
+    String getGas() throws Exception;
 
     @GET
     @Path("/pollution")
     @Produces("application/text")
-    String getPollution();
+    String getPollution() throws Exception;
 
     @GET
     @Path("/serial")

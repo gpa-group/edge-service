@@ -104,7 +104,7 @@ public class EdgeResource {
     }
 
     @Scheduled(every = "5s") 
-    void scheduled() {
+    void scheduled() throws Exception {
         String measure = null;
         String decoratedGasMeasure = null;
         String decoratedPollutionMeasure = null;
@@ -112,31 +112,31 @@ public class EdgeResource {
         try{
             measure = sensorService.getGas();
             decoratedGasMeasure = decorateMeasure(measure);
-        //    dataHubServiceImpl.sendGas(decoratedGasMeasure);
+            dataHubServiceImpl.sendGas(decoratedGasMeasure);
         }catch(Exception e){
-            System.out.println("Error getting gas measure");
+            System.out.println("Error getting gas measure" + e.getMessage());
         }
 
         try{
             measure = sensorService.getPollution();
             decoratedPollutionMeasure = decorateMeasure(measure);
-        //    dataHubServiceImpl.sendPollution(decoratedPollutionMeasure);
+            dataHubServiceImpl.sendPollution(decoratedPollutionMeasure);
         }catch(Exception e){
-            System.out.println("Error getting pollution measure");
+            System.out.println("Error getting pollution measure" + e.getMessage());
         }
     }
 
     @GET
     @Path("/gas")
     @Produces(MediaType.TEXT_PLAIN)
-    public String gas() {
+    public String gas() throws Exception {
         return sensorService.getGas();
     }
 
     @GET
     @Path("/pollution")
     @Produces(MediaType.TEXT_PLAIN)
-    public String pollution() {
+    public String pollution() throws Exception {
         return sensorService.getPollution();
     }
 
@@ -195,7 +195,7 @@ public class EdgeResource {
         jsonObject.addProperty("stationId", id);
         jsonObject.addProperty("instant", OffsetDateTime.now(ZoneOffset.UTC).toInstant().toString());
 
-        return jsonObject.getAsString();
+        return jsonObject.toString();
 
     }
 
