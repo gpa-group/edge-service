@@ -1,1 +1,2 @@
-Quarkus guide: https://quarkus.io/guides/rest-client
+# Edge Service
+retireve data via Rest api and send them via Mqtt
